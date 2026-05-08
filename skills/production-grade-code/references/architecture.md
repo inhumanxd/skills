@@ -12,9 +12,10 @@
 
 Use these terms instead of vague labels like component, utility, service, API, layer, or boundary unless the repo already uses those as domain terms.
 
-## Deep Modules
+## Deep Modules And Deletability
 
 Prefer deep modules: small honest interfaces hiding meaningful behavior.
+Prefer deletable modules: clear ownership, limited callers, and no hidden global coupling. A feature should be removable or replaceable without unrelated edits across the system.
 
 Use the deletion test:
 
@@ -55,8 +56,10 @@ Prefer:
 - Named option objects over ambiguous booleans.
 - Specific dependency ports at true external seams over generic fetch/query wrappers.
 - Return values that communicate outcomes clearly.
+- Compatibility rules: shared/public APIs preserve compatibility or include explicit deprecation and migration; private internals prefer clean cutover over permanent legacy branches.
 
 For significant interface changes, design at least two materially different options before choosing. Pick the best combination of depth, locality, caller simplicity, and testability.
+For module creation or updates, design the full lifecycle before coding: create, read/list/detail, update, validation, delete, soft-delete/archive, restore/unarchive, permissions, idempotency, and migration/backfill behavior. Implement included operations, explicitly exclude non-goals, or mark blockers.
 
 ## Domain Language
 

@@ -1,6 +1,6 @@
 ---
 name: production-grade-code
-description: "Writes, refactors, debugs, and reviews production-grade code. Use when the user asks to implement, fix, refactor, harden, simplify, improve architecture, make reusable, make maintainable, or write code like a senior/staff engineer. Enforces outside-in design, honest interfaces, deep-enough modules, behavior verification, safe refactoring, and explicit failure handling."
+description: "Writes, refactors, debugs, and reviews production-grade code. Use when the user asks to implement, fix, refactor, harden, simplify, improve architecture, create/update modules, make reusable, make maintainable, or write code like a senior/staff engineer. Enforces outside-in design, honest interfaces, module lifecycle completeness, deep-enough modules, behavior verification, safe refactoring, and explicit failure handling."
 ---
 
 # Production Grade Code
@@ -16,8 +16,9 @@ Use this file as the active protocol. Read references only when the task needs t
 - Failure handling, high-risk writes, and data integrity: [references/data-integrity-and-failure.md](references/data-integrity-and-failure.md)
 - Safe refactoring and final review: [references/refactoring-and-review.md](references/refactoring-and-review.md)
 - Source principles behind this skill: [references/source-principles.md](references/source-principles.md)
+- Concrete bad/good patterns: [references/examples.md](references/examples.md)
 
-If the request is mainly about domain language or design alignment, use `grill-with-docs` first. If it is mainly a bug, use the debugging loop. If it is mainly architecture, read the architecture reference before proposing code.
+If the request is broad, ambiguous, or missing lifecycle scope, use `scope-and-slice` first. If it is mainly about domain language or design alignment, use `grill-with-docs` first. If it is mainly a bug, use the debugging loop.
 
 ## Non-Negotiable Standard
 
@@ -29,21 +30,25 @@ Code is production-grade only when it has:
 4. **Deep-enough shape** — important behavior sits behind a simple interface; shallow pass-through abstractions are removed or avoided.
 5. **Simple implementation** — clear control flow, cohesive functions, precise names, no cleverness that hides risk.
 6. **Verified behavior** — a deterministic test or execution path proves the important success and failure cases.
+7. **Deletable shape** — behavior has clear ownership and can be removed, replaced, or isolated without unrelated edits across the system.
 
 If any item cannot be satisfied, continue working or mark `[blocked]` with the missing fact, access, or decision.
 
-## Core Operating Loop
+## Implementation Loop
 
 For every non-trivial code task:
 
-1. **Zoom out** — map the relevant callers, modules, routes, jobs, stores, integrations, and tests.
+1. **Confirm scope** — know the user-visible goal, affected callers, and verification path. If scope is unclear, return to `scope-and-slice`.
 2. **State the outside contract** — define success, absence, validation failure, authorization failure, dependency failure, infrastructure failure, partial success, and retry behavior as applicable.
+   For module creation or updates, confirm lifecycle operations are included, excluded, or blocked before coding.
 3. **Search for precedent** — reuse nearby codebase conventions before inventing a pattern.
 4. **Choose the seam** — put the interface where callers get leverage and maintainers get locality.
-5. **Implement one vertical slice** — smallest coherent behavior that can be verified end-to-end.
-6. **Verify immediately** — run the narrowest deterministic test or scenario that proves the slice.
+5. **Implement one behavior** — smallest coherent behavior that can be verified end-to-end.
+6. **Verify immediately** — run the narrowest deterministic test or scenario that proves the behavior.
 7. **Refactor only when green** — improve names, remove duplication, deepen modules, and delete obsolete code.
-8. **Repeat until complete** — update all affected callsites, tests, scripts, docs, and cleanup.
+8. **Repeat until complete** — update affected callsites, tests, scripts, docs, and cleanup.
+
+If adding behavior in an area with weak tests, leave at least one behavior-level exemplar test at the correct seam for future changes to copy.
 
 Do not make a broad horizontal pass before any behavior is verified.
 
@@ -66,8 +71,10 @@ Before editing, know:
 - **Never** mock internal collaborators just to assert private call order; test behavior through the public interface or deepest correct seam.
 - **Never** create a seam for one hypothetical adapter; one adapter is usually indirection, two real adapters can justify a seam.
 - **Never** normalize away fields callers may depend on because the current branch does not need them.
+- **Never** treat a module as complete after only create/update paths; lifecycle operations and edge cases must be implemented, explicitly excluded, or blocked.
 - **Never** use unbounded queries, loops, fanout, retries, or memory-heavy processing in production paths.
 - **Never** present partial work as complete because it compiles or the happy path works.
+- **Never** leave a local hack as an attractive precedent; contain it, name the constraint, and prevent future callers from copying it accidentally.
 
 ## Final Review Gate
 
@@ -76,10 +83,12 @@ Before yielding, inspect the diff like a production PR:
 - Public behavior matches the user's actual request.
 - Changed exported symbols, routes, tasks, models, migrations, scripts, helpers, and consumers are handled.
 - Success and failure modes are distinguishable where callers need them.
+- Shared/public APIs preserve compatibility or include an explicit deprecation and migration path; private internals prefer clean cutover.
 - New modules earn their interface through depth, locality, or volatility isolation.
 - Duplicated business knowledge is removed at the source.
 - Names align with domain language.
 - Resources and failure paths are bounded and explicit.
-- Tests verify observable behavior and important edge cases.
+- Security boundaries are handled: authentication, authorization, tenancy/scope, untrusted input, injection-safe APIs, secrets, and sensitive logs.
+- Tests verify observable behavior, important edge cases, and at least one normal usage path for new public behavior.
 - Obsolete code, comments, aliases, dead imports, stale tests, and debug artifacts are removed.
 - Verification was run and the observed result is reported.

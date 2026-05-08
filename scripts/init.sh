@@ -11,6 +11,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SKILLS_SRC="$REPO_ROOT/skills"
+DEFAULTS_SRC="$REPO_ROOT/.github/copilot-instructions.md"
 
 DRY_RUN=0
 COPY_MODE=0
@@ -32,7 +33,7 @@ Options:
 Default behavior:
   - uses ~/.agents/skills as the canonical skills directory
   - symlinks Claude/Copilot/OMP/GitHub skill locations to ~/.agents/skills
-  - writes ~/.agents/AGENTS.md and links Codex/OpenCode/Claude/OMP globals to it
+  - links/copies .github/copilot-instructions.md to ~/.agents/AGENTS.md and links Codex/OpenCode/Claude/OMP globals to it
   - backs up existing non-symlink files/dirs before replacing them
 USAGE
 }
@@ -110,46 +111,19 @@ ensure_dir() {
   run mkdir -p "$dir"
 }
 
-write_global_defaults() {
-  local dest="$1"
-  local tmp
-  tmp="${TMPDIR:-/tmp}/agent-defaults.$$.$RANDOM.md"
+install_global_defaults() {
+  local src="$1"
+  local dest="$2"
 
-  cat > "$tmp" <<'DEFAULTS'
-# Global Agent Defaults
-
-## Skill routing
-- For implementation, fixing, refactoring, hardening, or code review, use `production-grade-code`.
-- For large, ambiguous, or multi-step requests, use `scope-and-slice` first; execute one small verified slice at a time.
-- For domain language, architecture alignment, or fuzzy product concepts, use `grill-with-docs` before implementation.
-
-## Coding defaults
-- Start by pinning down the user’s actual intent: deliverables, non-goals, material unknowns, and repo facts needed before asking.
-- Understand surrounding context: callers and contracts, data flow, existing patterns, and affected tests.
-- Reuse existing repo patterns before inventing new ones.
-- Make failure behavior explicit; never return plausible success after failure.
-- Verify non-trivial behavior with the narrowest relevant test or scenario before claiming completion.
-- Be concise without losing truth: omit filler and ceremony, but preserve exact technical terms, evidence, risks, blockers, and verification results.
-
-## Shell defaults
-- Prefix shell commands with `rtk` when available, including `git`, test, build, and `rg` commands.
-DEFAULTS
-
-  if [ -e "$dest" ] || [ -L "$dest" ]; then
-    if [ ! -L "$dest" ] && cmp -s "$tmp" "$dest"; then
-      log "ok $dest"
-      rm -f "$tmp"
-      return 0
-    fi
-    backup_path "$dest"
+  if [ ! -f "$src" ]; then
+    echo "error: global defaults source not found: $src" >&2
+    exit 1
   fi
 
-  log "write $dest"
-  if [ "$DRY_RUN" -eq 1 ]; then
-    log "dry-run: write global defaults to $dest"
-    rm -f "$tmp"
+  if [ "$COPY_MODE" -eq 1 ]; then
+    replace_with_copy "$src" "$dest"
   else
-    mv "$tmp" "$dest"
+    replace_with_symlink "$src" "$dest"
   fi
 }
 
@@ -219,7 +193,7 @@ main() {
 
   if [ "$NO_INSTRUCTIONS" -eq 0 ]; then
     ensure_dir "$HOME/.agents"
-    write_global_defaults "$canonical_defaults"
+    install_global_defaults "$DEFAULTS_SRC" "$canonical_defaults"
 
     ensure_dir "$HOME/.codex"
     ensure_dir "$HOME/.config/opencode"

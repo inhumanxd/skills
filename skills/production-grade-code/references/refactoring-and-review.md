@@ -6,6 +6,7 @@
 - Prefer small mechanical transformations with verification between them.
 - When changing legacy code, first create or find a seam that can prove behavior.
 - If no correct seam exists for a regression test, state that architecture is preventing safe verification and fix the seam when in scope.
+- Preserve shared/public API compatibility or include a deprecation and migration path; use clean cutover for private internals when callers are updated in the same change.
 - Delete obsolete tests that only lock down shallow internals once behavior is covered at the deeper interface.
 
 Refactoring is not complete when code looks cleaner. It is complete when behavior is preserved or intentionally changed, and verification proves it.
@@ -17,6 +18,7 @@ Refactoring is not complete when code looks cleaner. It is complete when behavio
 - Extract helpers when they remove duplicated domain knowledge, clarify an invariant, isolate a volatile dependency, or create a legitimate seam.
 - Keep pass-through wrappers out unless they enforce a contract, translate a shape, add observability, or isolate volatility.
 - Comments should explain why, invariants, danger, non-obvious domain rules, or external constraints. Do not comment what the code plainly says.
+- New code sets precedent. If a workaround is unavoidable, isolate it, name the constraint, and make the safe path easier to copy than the hack.
 - Types should reduce invalid states, not merely decorate them.
 
 ## Review Checklist
@@ -32,5 +34,6 @@ Before claiming completion:
 - Resources are bounded and failure paths explicit.
 - Tests target observable behavior and survive internal refactors.
 - Verification covers the edge cases most likely to cause production incidents.
+- New or updated modules cover the declared lifecycle surface, including delete/archive/restore behavior or explicit non-goals.
 - Obsolete code paths, comments, aliases, dead imports, stale tests, and debug artifacts are removed.
 - Docs, examples, seed data, migrations, scripts, and operational runbooks are updated when affected.

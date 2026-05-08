@@ -11,6 +11,9 @@ For non-trivial code changes:
 - Mock only true external boundaries: vendor APIs, network services, time, randomness, filesystem, and sometimes databases when no test database or local substitute exists.
 - Do not mock internal collaborators you control just to assert call counts or private sequencing.
 - Include meaningful failure or edge cases when behavior branches.
+- If adding new behavior in a weakly tested area, add at least one behavior-level exemplar test that future changes can copy.
+- If the right test is hard to write, improve the fixture, helper, or seam instead of skipping the test or testing internals.
+- Treat tests and examples as usage documentation for the public interface: show normal usage, important failures, and caller expectations.
 - Run the narrowest command that proves the changed behavior.
 - Report only observed verification results.
 

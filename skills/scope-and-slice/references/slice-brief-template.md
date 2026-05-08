@@ -20,6 +20,22 @@ Use this for large, ambiguous, or multi-step requests. Keep it short enough to r
 - [Repo/user/technical constraint]
 - [Risk or compatibility constraint]
 
+## Module Lifecycle Matrix
+
+Use only when creating or updating a module. Mark each row `included`, `excluded`, or `blocked`.
+
+| Operation | Status | Acceptance / reason |
+| --- | --- | --- |
+| Create | [included/excluded/blocked] | [condition or reason] |
+| Read/list/detail | [included/excluded/blocked] | [condition or reason] |
+| Update | [included/excluded/blocked] | [condition or reason] |
+| Delete / soft-delete / archive | [included/excluded/blocked] | [condition or reason] |
+| Restore / unarchive | [included/excluded/blocked] | [condition or reason] |
+| Validation / conflicts | [included/excluded/blocked] | [condition or reason] |
+| Permissions / tenancy | [included/excluded/blocked] | [condition or reason] |
+| Idempotency / concurrency | [included/excluded/blocked] | [condition or reason] |
+| Migration / backfill / cleanup | [included/excluded/blocked] | [condition or reason] |
+
 ## Slices
 
 ### Slice 1: [Small outcome]
@@ -47,6 +63,7 @@ Dependencies: Slice 1
 Before each new slice, confirm:
 - Are we still solving the original goal?
 - Did scope silently expand or shrink?
+- If module work is in scope, did we cover or explicitly exclude lifecycle operations and edge cases?
 - Did repo facts contradict the brief?
 - Is the next slice still small and verifiable?
 ```
@@ -64,6 +81,7 @@ Before each new slice, confirm:
 - “Patient can archive one assignment from the dashboard, with API and UI test coverage.”
 - “Backend validates duplicate booking link slugs and returns the existing error shape.”
 - “Migration dry-run reports invalid rows without writing changes.”
+- “Projects module supports create/list/detail/update/archive/restore with permission and validation coverage; hard delete explicitly excluded by retention policy.”
 
 ## Bad Slice Examples
 
@@ -71,3 +89,4 @@ Before each new slice, confirm:
 - “Refactor auth and update tests.”
 - “Clean up the exercise module.”
 - “Add all API, UI, and docs.”
+- “Create the projects module” with only create/update paths and no lifecycle exclusions.

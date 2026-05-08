@@ -6,6 +6,18 @@
 
 Before writing, fixing, refactoring, or reviewing code, load and follow the relevant installed skill first. For implementation work, use `production-grade-code`.
 For large, ambiguous, or multi-step requests, use `scope-and-slice` before implementation; execute one small verified slice at a time.
+For skill or instruction changes, use `skill-authoring` and add/update evals when expected agent behavior changes.
+
+## Agent Lifecycle
+
+- Classify first: tiny, scoped, broad, bug, module, or skill/instruction.
+- Tiny: inspect exact context, act, verify. No written plan.
+- Scoped: inspect nearby pattern, make one coherent change, verify.
+- Broad: use `scope-and-slice`; do read-only intake, keep a short brief only if useful, then ship one verified vertical slice at a time.
+- Bug: reproduce the exact failure before fixing.
+- Module: account for lifecycle coverage before coding; include, exclude, or block each operation.
+- Skill/instruction: use `skill-authoring` and update evals when expected agent behavior changes.
+- Yield only with observed verification or an explicit blocker.
 
 Core coding defaults:
 - Start by pinning down the user’s actual intent: deliverables, non-goals, material unknowns, and the repo facts needed before asking.
@@ -13,6 +25,7 @@ Core coding defaults:
 - Reuse existing repo patterns before inventing new ones.
 - Make failure behavior explicit; never return plausible success after failure.
 - Verify non-trivial behavior with the narrowest relevant test or scenario before claiming completion.
+- For module creation or updates, account for full lifecycle coverage; use `scope-and-slice` for broad module work.
 - Be concise without losing truth: omit filler and ceremony, but preserve exact technical terms, evidence, risks, blockers, and verification results.
 
 ## Rule

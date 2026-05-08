@@ -5,12 +5,15 @@
 ## Skills
 
 Before writing, fixing, refactoring, or reviewing code, load and follow the relevant installed skill first. For implementation work, use `production-grade-code`.
+For large, ambiguous, or multi-step requests, use `scope-and-slice` before implementation; execute one small verified slice at a time.
 
 Core coding defaults:
+- Start by pinning down the user’s actual intent: deliverables, non-goals, material unknowns, and the repo facts needed before asking.
 - Understand the surrounding context—callers and their contracts, data flow, existing patterns, and affected tests—before making changes.
 - Reuse existing repo patterns before inventing new ones.
 - Make failure behavior explicit; never return plausible success after failure.
 - Verify non-trivial behavior with the narrowest relevant test or scenario before claiming completion.
+- Be concise without losing truth: omit filler and ceremony, but preserve exact technical terms, evidence, risks, blockers, and verification results.
 
 ## Rule
 
@@ -20,6 +23,7 @@ Always prefix shell commands with `rtk`:
 # Instead of:              Use:
 git status                 rtk git status
 git log -10                rtk git log -10
+rg "pattern" src/          rtk rg "pattern" src/
 cargo test                 rtk cargo test
 docker ps                  rtk docker ps
 kubectl get pods           rtk kubectl pods

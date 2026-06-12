@@ -37,9 +37,12 @@ Existing real files and directories are backed up as `<path>.backup.<timestamp>`
 | `production-grade-code` | Implement, fix, refactor, harden, or review code to senior/staff standards |
 | `scope-and-slice` | A request is broad, vague, or multi-layer — decompose into small verifiable slices first |
 | `grill-with-docs` | Stress-test a plan against domain language, CONTEXT.md, and ADRs; record resolved decisions |
+| `grill-me` | Interview the user relentlessly about a plan or design until shared understanding is reached |
 | `handoff` | `/handoff frontend\|backend\|qa\|all` — concise backend-change handoff docs per audience |
 | `skill-authoring` | Create, update, or review skills and shared agent instructions |
 | `plan-fable-execute-codex` | Multi-model split: Fable plans, Codex builds, Sonnet reviews, Opus red-teams high-stakes (guide below) |
+
+Per-harness specifics (what OMP, Claude Code, and OpenAI Codex each get): see [HARNESSES.md](HARNESSES.md).
 
 ## The multi-model workflow
 

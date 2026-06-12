@@ -1,11 +1,11 @@
 ---
 name: plan-fable-execute-codex
-description: Multi-model workflow that plans with Claude Fable 5 (big-brain reasoning) and executes with OpenAI Codex GPT-5.5, with cross-family review by Sonnet and optional Opus red-team for high-stakes plans. Use when the user wants a feature or non-trivial change planned by the strongest reasoning model and implemented by the coding model — i.e. "plan with fable, execute with gpt-5.5", "use the split workflow", or "big-brain plan then codex build".
+description: Multi-model workflow that plans with Claude Fable 5 (big-brain reasoning) and executes with OpenAI Codex GPT-5.5, with cross-family review by Sonnet and optional Opus red-team plus dual review for high-stakes plans. Use when the user wants a feature or non-trivial change planned by the strongest reasoning model and implemented by the coding model — i.e. "plan with fable, execute with gpt-5.5", "use the split workflow", or "big-brain plan then codex build".
 ---
 
 # Plan with Fable, execute with Codex
 
-Delegation workflow with a strict model split: **Fable 5 decides; GPT-5.5 gathers and builds; a different Anthropic family reviews** (cross-family review catches the authoring family's blind spots).
+Delegation workflow with a strict model split: **Fable 5 decides; GPT-5.5 gathers and builds; a different Anthropic family reviews** (cross-family review kills self-agreement bias — the authoring family's blind spots are correlated).
 
 | Role | Agent | Model | In default path? |
 |---|---|---|---|
@@ -15,6 +15,7 @@ Delegation workflow with a strict model split: **Fable 5 decides; GPT-5.5 gather
 | Executor: edits, builds, tests | `codex-executor` | `gpt-5.5:high` | yes |
 | Reviewer: diff vs plan, cross-family | `sonnet-reviewer` | `claude-sonnet-4-6:high` | yes |
 | Red team: adversarial plan attack | `opus-redteam` | `claude-opus-4-8:high` | high-stakes only |
+| Second reviewer: review-tuned, independent pass | `codex-reviewer` | `codex-auto-review:high` | high-stakes only |
 
 ## Token rules (apply throughout)
 - **Fable never explores.** That includes YOU, the orchestrator. All context gathering — locating code, mapping flows, enumerating callsites, extracting contracts — goes to `codex-scout`. Fable consumes dossiers and spot-checks load-bearing lines only.
@@ -45,10 +46,11 @@ Skip for trivial edits — just do those directly.
    - **Dependent phases:** when a phase needs a finished predecessor, `irc` the SAME executor with the next phase instead of spawning a new one — it already holds the conventions it just learned.
    - Executors escalate genuine design forks to the architect over `irc` on their own.
 
-7. **Verify & review (parallel).** Two independent checks at once:
+7. **Verify & review (parallel).** Independent checks at once:
    - **Gates (you):** run the union gates across the changed files — narrowest relevant tests, typecheck, lint. Subagents intentionally skip project-wide gates; closing that loop is your job.
    - **Review (`sonnet-reviewer`):** spawn it with the plan path and the diff scope (changed files or base ref). It returns a verdict with cited blockers/should-fixes.
-   - Gate failures and review blockers go to the **owning executor** via `irc` with the exact failing output or finding — it has the context to fix. Fix only trivia yourself. After fixes, `irc` the reviewer for re-review of flagged items. Blockers must clear before cleanup; apply the three-strikes rule.
+   - **High-stakes changes get dual review:** spawn `codex-reviewer` in the same batch as `sonnet-reviewer` — independent passes, different training, different catches. Do not let them coordinate.
+   - Gate failures and review blockers go to the **owning executor** via `irc` with the exact failing output or finding — it has the context to fix. Fix only trivia yourself. After fixes, `irc` the reviewer(s) for re-review of flagged items. Blockers must clear before cleanup; apply the three-strikes rule.
 
 8. **Cleanup (last).** Only after gates pass and review blockers are clear: changelog, tests, docs, scaffolding removal — in full, before yielding.
 
@@ -58,6 +60,7 @@ Skip for trivial edits — just do those directly.
 - Edits, builds, runs, mechanical implementation → `codex-executor` (GPT-5.5).
 - Diff review against the plan → `sonnet-reviewer` (Sonnet 4.6, cross-family).
 - Adversarial review of high-stakes plans → `opus-redteam` (Opus 4.8, opt-in).
+- Second independent review of high-stakes diffs → `codex-reviewer` (codex-auto-review, opt-in).
 
 ## Prerequisites
-- `anthropic/claude-fable-5`, `openai-codex/gpt-5.5`, `anthropic/claude-sonnet-4-6`, and `anthropic/claude-opus-4-8` must be authed (`/model` to confirm). The legacy `codex-lb` proxy (`127.0.0.1:2455`) is NOT used by this workflow.
+- `anthropic/claude-fable-5`, `openai-codex/gpt-5.5`, `anthropic/claude-sonnet-4-6`, `anthropic/claude-opus-4-8`, and `openai-codex/codex-auto-review` must be authed (`/model` to confirm). The legacy `codex-lb` proxy (`127.0.0.1:2455`) is NOT used by this workflow.

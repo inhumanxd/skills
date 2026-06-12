@@ -43,7 +43,7 @@ Existing real files and directories are backed up as `<path>.backup.<timestamp>`
 
 ## The multi-model workflow
 
-Six files cooperate (OMP only). The split is strict: **Fable 5 decides; GPT-5.5 gathers and builds; a different Anthropic family reviews** — cross-family review catches the authoring family's correlated blind spots.
+Seven files cooperate (OMP only). The split is strict: **Fable 5 decides; GPT-5.5 gathers and builds; a different Anthropic family reviews** — cross-family review kills self-agreement bias.
 
 | File | Role | Model | Default path? |
 |---|---|---|---|
@@ -53,6 +53,7 @@ Six files cooperate (OMP only). The split is strict: **Fable 5 decides; GPT-5.5 
 | `agents/codex-executor.md` | Builder: implements the plan with full edit/build/test tooling | `openai-codex/gpt-5.5:high` | yes |
 | `agents/sonnet-reviewer.md` | Reviewer: diff vs plan — conformance, correctness, security, integrity | `anthropic/claude-sonnet-4-6:high` | yes |
 | `agents/opus-redteam.md` | Red team: adversarial attack on high-stakes plans before execution | `anthropic/claude-opus-4-8:high` | high-stakes only |
+| `agents/codex-reviewer.md` | Second reviewer: review-tuned model, independent pass on high-stakes diffs | `openai-codex/codex-auto-review:high` | high-stakes only |
 
 ### Invoke
 
@@ -66,7 +67,7 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 4. **Gate** — orchestrator checks structure (exact files/symbols named? verification runnable? deps marked?), not the design. Gaps go back to the idle architect over `irc`.
 5. **Red-team (high-stakes only)** — plans touching migrations, auth, money, irreversible data, or concurrency get attacked by `opus-redteam` first: kill shots go back to the architect before any execution. Ordinary changes skip this hop entirely.
 6. **Execute** — one batch of `codex-executor` spawns, one per independent phase group. Dependent phases are sent to the *same* executor via `irc` (it keeps its context). Executors escalate genuine design forks to the original architect over `irc` — reviving it, not respawning it.
-7. **Verify & review (parallel)** — orchestrator runs the union gates (tests/typecheck/lint over changed files) while `sonnet-reviewer` reviews the diff against the plan. Gate failures and review blockers route to the owning executor; three failed fixes of the same failure force escalation to the architect (no symptom-patching loops). Blockers clear before cleanup.
+7. **Verify & review (parallel)** — orchestrator runs the union gates (tests/typecheck/lint over changed files) while `sonnet-reviewer` reviews the diff against the plan; high-stakes diffs additionally get an independent pass from `codex-reviewer` (review-tuned, no coordination between reviewers). Gate failures and review blockers route to the owning executor; three failed fixes of the same failure force escalation to the architect (no symptom-patching loops). Blockers clear before cleanup.
 8. **Cleanup** — changelog, tests, docs — only after gates pass and blockers are clear.
 
 ### Why it's token-efficient
@@ -79,10 +80,18 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 - Review is evidence-bound: the reviewer gets the plan path and the diff scope, not a conversation transcript. The red team runs only when stakes justify a second frontier brain.
 - Three-strikes caps doomed fix loops — the third identical failure stops burning executor tokens and goes back to design.
 
+### Why these models (June 2026 data)
+
+- **Opus 4.8 as red team** — leads SWE-bench Pro (69.2% vs GPT-5.5's 58.6%) and honesty metrics (4× more likely to flag flaws in code, 35.9% vs 86% hallucination rate); prompt caching from 1,024 tokens makes its loops cheap. The strongest available second brain, reserved for when stakes justify it.
+- **GPT-5.5 as executor/scout** — wins Terminal-Bench 2.0 (78–82% vs Opus's 74.6%), the closest proxy for in-harness agentic build/test loops; also spreads load across both provider subscriptions instead of concentrating rate limits on Anthropic.
+- **Sonnet 4.6 as reviewer** — $3/$15 per MTok vs GPT-5.5's $5/$30, 79.6% SWE-bench Verified: frontier-adjacent review at mid-tier price, and cross-family vs the GPT-5.5 author. Practitioner consensus: reviewers from a different company than the author, because single-family review loops self-agree.
+- **codex-auto-review as second reviewer** — review-tuned; a second independent pass with different training catches different defects. High-stakes only: review panels are a pro pattern, but two reviewers on every change is orchestration tax.
+- **No haiku/mini/nano agent** — mechanical lookups already run on `codex-scout`; below that, dossier quality drops and the architect pays to re-verify, which costs more than the scout saved. Documented as a knob, not a default.
+
 ### Prerequisites
 
-- OMP harness with `anthropic/claude-fable-5`, `openai-codex/gpt-5.5`, `anthropic/claude-sonnet-4-6`, and `anthropic/claude-opus-4-8` authed (`/model` to confirm).
-- Agents installed via `scripts/init.sh` so all five agents are discoverable.
+- OMP harness with `anthropic/claude-fable-5`, `openai-codex/gpt-5.5`, `anthropic/claude-sonnet-4-6`, `anthropic/claude-opus-4-8`, and `openai-codex/codex-auto-review` authed (`/model` to confirm).
+- Agents installed via `scripts/init.sh` so all six agents are discoverable.
 
 ### Tuning
 
@@ -90,6 +99,8 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 - `codex-scout` is pinned `:medium` — right for navigation and extraction. Raise to `:high` only if dossiers keep missing couplings in gnarly code.
 - `sonnet-reviewer` is pinned `:high` — review depth is where regressions get caught; the input (plan + diff) is bounded, so the cost is too.
 - `opus-redteam` is opt-in by workflow design, not by model setting. Widen or narrow the "high-stakes" trigger list in the skill to tune how often it runs.
+- `codex-scout` can drop to `openai-codex/gpt-5.4-mini:medium` for very large mechanical sweeps where dossier depth matters less than volume — measure whether architect re-verification eats the savings before making it the default.
+- **Alternative executor profile:** `anthropic/claude-sonnet-4-6:high` is cheaper per token than GPT-5.5 and scores higher on SWE-bench — but it concentrates all heavy roles on one provider and puts author and reviewer in the same family; if you switch, move review to `codex-reviewer`.
 
 ## Validate
 

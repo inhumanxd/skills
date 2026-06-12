@@ -5,13 +5,16 @@ set -euo pipefail
 # agent-specific locations to it.
 #
 # Canonical skills:      ~/.agents/skills/<skill>
+# Canonical agents:      ~/.agents/agents/<agent>.md
 # Canonical defaults:    ~/.agents/AGENTS.md
 # Compatibility links:   Claude, Copilot, OMP, GitHub, Codex, OpenCode
+#                        (agents are OMP-only: they pin OMP model ids and tools)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SKILLS_SRC="$REPO_ROOT/skills"
 DEFAULTS_SRC="$REPO_ROOT/.github/copilot-instructions.md"
+AGENTS_SRC="$REPO_ROOT/agents"
 
 DRY_RUN=0
 COPY_MODE=0
@@ -144,6 +147,19 @@ install_skill() {
   fi
 }
 
+install_agent() {
+  local src="$1"
+  local canonical_root="$2"
+  local name
+  name="$(basename "$src")"
+
+  if [ "$COPY_MODE" -eq 1 ]; then
+    replace_with_copy "$src" "$canonical_root/$name"
+  else
+    replace_with_symlink "$src" "$canonical_root/$name"
+  fi
+}
+
 main() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -191,6 +207,20 @@ main() {
     done
   done
 
+  local canonical_agents="$HOME/.agents/agents"
+  if [ -d "$AGENTS_SRC" ]; then
+    local omp_agents="$HOME/.omp/agent/agents"
+    ensure_dir "$canonical_agents"
+    ensure_dir "$omp_agents"
+
+    local agent
+    for agent in "$AGENTS_SRC"/*.md; do
+      [ -f "$agent" ] || continue
+      install_agent "$agent" "$canonical_agents"
+      replace_with_symlink "$canonical_agents/$(basename "$agent")" "$omp_agents/$(basename "$agent")"
+    done
+  fi
+
   if [ "$NO_INSTRUCTIONS" -eq 0 ]; then
     ensure_dir "$HOME/.agents"
     install_global_defaults "$DEFAULTS_SRC" "$canonical_defaults"
@@ -208,6 +238,9 @@ main() {
 
   log "done"
   log "canonical skills: $canonical_skills"
+  if [ -d "$AGENTS_SRC" ]; then
+    log "canonical agents: $canonical_agents"
+  fi
   if [ "$NO_INSTRUCTIONS" -eq 0 ]; then
     log "canonical defaults: $canonical_defaults"
   fi

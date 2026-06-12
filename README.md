@@ -43,12 +43,13 @@ Existing real files and directories are backed up as `<path>.backup.<timestamp>`
 
 ## The two-model workflow
 
-Three files cooperate (OMP only):
+Four files cooperate (OMP only). The split is strict: **Fable 5 decides; GPT-5.5 does everything else.**
 
 | File | Role | Model |
 |---|---|---|
-| `skills/plan-fable-execute-codex/SKILL.md` | Orchestration: frame → plan → gate → execute → verify | session model |
-| `agents/fable-architect.md` | Read-only planner: investigates, decides, emits a phased plan | `anthropic/claude-fable-5:high` |
+| `skills/plan-fable-execute-codex/SKILL.md` | Orchestration: frame → plan → gate → execute → verify | session model (Fable 5) |
+| `agents/fable-architect.md` | Decision maker: consumes scout dossiers, decides, emits a phased plan | `anthropic/claude-fable-5:high` |
+| `agents/codex-scout.md` | Context gatherer: read-only investigation, returns citation-dense dossiers | `openai-codex/gpt-5.5:medium` |
 | `agents/codex-executor.md` | Builder: implements the plan with full edit/build/test tooling | `openai-codex/gpt-5.5:high` |
 
 ### Invoke
@@ -57,8 +58,8 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 
 ### What happens
 
-1. **Frame** — orchestrator states deliverable, constraints, non-goals; resolves unknowns from the repo first.
-2. **Plan** — `fable-architect` (id `Architect`) investigates read-only, fanning out cheap `explore` scouts for enumeration, and returns Problem / Findings / Plan / Risks / Verification. Every phase carries `files:` and `depends:` markers.
+1. **Frame** — orchestrator states deliverable, constraints, non-goals. Missing facts are fetched by a `codex-scout`, never by Fable reading breadth.
+2. **Plan** — `fable-architect` (id `Architect`) fans out `codex-scout` agents for all investigation, consumes their dossiers, spot-checks only load-bearing claims, and returns Problem / Findings / Plan / Risks / Verification. Every phase carries `files:` and `depends:` markers.
 3. **Persist** — the plan is copied once to a file (`local://plan.md`, or the repo's plans dir for durable plans). It is never pasted into prompts again; everything downstream gets the reference.
 4. **Gate** — orchestrator checks structure (exact files/symbols named? verification runnable? deps marked?), not the design. Gaps go back to the idle architect over `irc`.
 5. **Execute** — one batch of `codex-executor` spawns, one per independent phase group. Dependent phases are sent to the *same* executor via `irc` (it keeps its context). Executors escalate genuine design forks to the original architect over `irc` — reviving it, not respawning it.
@@ -70,17 +71,18 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 - The plan exists **once**, as a file; agents receive paths, not pasted text.
 - Shared background goes in the batch `context` field once, not per assignment.
 - Idle/parked agents are **revived by messaging them** — escalations and follow-up phases reuse existing context instead of paying for fresh investigation.
-- The architect reads structural summaries and drills into line ranges; mechanical enumeration runs on cheap read-only `explore` scouts, not on Fable.
+- **Fable never explores.** Raw investigation — file reads, searches, dead ends — runs on GPT-5.5 scouts; Fable pays only for compressed dossiers plus 1–3 spot-check range reads per load-bearing claim.
 - The architect writes contracts (signatures, types, schemas), never implementation bodies — the executor retypes code anyway.
 
 ### Prerequisites
 
 - OMP harness with `anthropic/claude-fable-5` and `openai-codex/gpt-5.5` authed (`/model` to confirm).
-- Agents installed via `scripts/init.sh` so `fable-architect` / `codex-executor` are discoverable.
+- Agents installed via `scripts/init.sh` so `fable-architect` / `codex-scout` / `codex-executor` are discoverable.
 
 ### Tuning
 
 - `codex-executor` is pinned `:high`. If plans are consistently tight and execution rarely escalates, drop to `openai-codex/gpt-5.5:medium` in `agents/codex-executor.md` for cheaper builds.
+- `codex-scout` is pinned `:medium` — right for navigation and extraction. Raise to `:high` only if dossiers keep missing couplings in gnarly code.
 
 ## Validate
 

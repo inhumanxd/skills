@@ -5,13 +5,20 @@ description: Two-model workflow that plans with Claude Fable 5 (big-brain reason
 
 # Plan with Fable, execute with Codex
 
-Delegation workflow: the **big brain** (`fable-architect`, `anthropic/claude-fable-5:high`) designs; the **executor** (`codex-executor`, `openai-codex/gpt-5.5:high`) builds. You orchestrate: frame, route, verify. Models are pinned in the agent files — spawning routes automatically.
+Delegation workflow with a strict model split. **Fable 5 decides; GPT-5.5 does everything else.**
+
+| Role | Agent | Model |
+|---|---|---|
+| Orchestrator (you): frame, route, gate, verify | — | session (Fable 5) |
+| Architect: design, trade-offs, the plan | `fable-architect` | `anthropic/claude-fable-5:high` |
+| Scout: context gathering, read-only | `codex-scout` | `openai-codex/gpt-5.5:medium` |
+| Executor: edits, builds, tests | `codex-executor` | `openai-codex/gpt-5.5:high` |
 
 ## Token rules (apply throughout)
+- **Fable never explores.** That includes YOU, the orchestrator. All context gathering — locating code, mapping flows, enumerating callsites, extracting contracts — goes to `codex-scout`. Fable consumes dossiers and spot-checks load-bearing lines only.
 - **The plan exists once, as a file.** Hand references (`local://plan.md`), never paste plan text into assignments or retype it.
 - **Shared background goes in the batch `context` field once** — never duplicated per assignment.
 - **Follow-up work goes to the agent that already holds the context.** `irc` revives idle/parked agents; spawn fresh only when nobody has relevant context.
-- **Mechanical lookups** (where does X live, list callsites, map a package) → `explore` / `quick_task`. Never spend Fable tokens on enumeration.
 
 ## When to use
 - Non-trivial features, refactors, or multi-file changes where design quality matters.
@@ -21,9 +28,9 @@ Skip for trivial edits — just do those directly.
 
 ## Procedure
 
-1. **Frame.** One short paragraph: deliverable, constraints, non-goals. Resolve unknowns from the repo (delegate breadth to `explore`) before delegating; never pass vagueness downstream.
+1. **Frame.** One short paragraph: deliverable, constraints, non-goals — from the ask and what you already know. A fact you're missing to frame correctly → spawn a `codex-scout` with the specific question; do NOT read breadth yourself. Never pass vagueness downstream.
 
-2. **Plan.** Spawn `fable-architect` with a stable id (e.g. `Architect`) and the frame. It investigates read-only — fanning out its own `explore` scouts for breadth — and returns Problem / Findings / Plan / Risks & invariants / Verification, with per-phase `files:` and `depends:` markers.
+2. **Plan.** Spawn `fable-architect` with a stable id (e.g. `Architect`) and the frame. It fans out its own `codex-scout` agents for all investigation, consumes their dossiers, spot-checks the load-bearing claims, and returns Problem / Findings / Plan / Risks & invariants / Verification with per-phase `files:` and `depends:` markers.
 
 3. **Persist once.** Copy the plan artifact to a file: `cp` the `agent://Architect` path to `local://plan.md` (internal URIs auto-resolve in bash), or to the repo's plans dir (e.g. `plans/<slug>.md`) when it should outlive the session. Do NOT retype or summarize the plan — that re-buys what you already paid for.
 
@@ -40,8 +47,8 @@ Skip for trivial edits — just do those directly.
 
 ## Routing
 - Design / architecture / hard reasoning / plan revision → `fable-architect` (Fable 5).
+- Context gathering / discovery / enumeration → `codex-scout` (GPT-5.5, read-only).
 - Edits, builds, runs, mechanical implementation → `codex-executor` (GPT-5.5).
-- Mechanical discovery / enumeration → `explore` (read-only) or `quick_task`.
 
 ## Prerequisites
 - `anthropic/claude-fable-5` and `openai-codex/gpt-5.5` must be authed (`/model` to confirm). The legacy `codex-lb` proxy (`127.0.0.1:2455`) is NOT used by this workflow.

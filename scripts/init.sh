@@ -25,7 +25,7 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/init.sh [options]
 
-Installs this repo's skills globally for common coding agents.
+Installs this repo's skills and agents globally for common coding agents.
 
 Options:
   --dry-run          Print actions without changing files.
@@ -36,6 +36,7 @@ Options:
 Default behavior:
   - uses ~/.agents/skills as the canonical skills directory
   - symlinks Claude/Copilot/OMP/GitHub skill locations to ~/.agents/skills
+  - links agents/*.md to ~/.agents/agents and into ~/.omp/agent/agents (OMP-only)
   - links/copies .github/copilot-instructions.md to ~/.agents/AGENTS.md and links Codex/OpenCode/Claude/OMP globals to it
   - backs up existing non-symlink files/dirs before replacing them
 USAGE

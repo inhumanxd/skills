@@ -79,6 +79,17 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 - The architect writes contracts (signatures, types, schemas), never implementation bodies — the executor retypes code anyway.
 - Review is evidence-bound: the reviewer gets the plan path and the diff scope, not a conversation transcript. The red team runs only when stakes justify a second frontier brain.
 - Three-strikes caps doomed fix loops — the third identical failure stops burning executor tokens and goes back to design.
+- Cache discipline: agent definitions and the batch `context` field are stable prefixes; volatile data (status, timestamps) goes last or not at all. Prompt caching prices repeated input at ~10% — structure, not wording, is what earns it.
+
+### Harness-level levers (OMP, outside this repo)
+
+Set once in `~/.omp/agent/config.yml` — these bill independently of the workflow:
+
+- `modelRoles.smol: anthropic/claude-haiku-4-5:low` — internal operations (compaction summaries, session titles, short summaries) otherwise bill at the default model's frontier rate.
+- `modelRoles.commit: anthropic/claude-haiku-4-5:low` — commit-message generation on the cheap tier.
+- `modelRoles.slow: anthropic/claude-opus-4-8:high` — the "most capable" role for explicit slow-tier calls; keep it on an authed provider.
+- `rtk init -g` + the Claude `PreToolUse` hook — auto-wraps shell commands; historical `rtk gain` shows ~56% shell-output savings, and `rtk discover` lists what raw commands are still leaking.
+- Compaction defaults (compact near 85% of context, keep 20K recent, prune stale tool outputs) are already research-aligned; `compaction.strategy: snapcompact` is an experimental option that archives history as image frames for vision models at lower billed cost.
 
 ### Why these models (June 2026 data)
 

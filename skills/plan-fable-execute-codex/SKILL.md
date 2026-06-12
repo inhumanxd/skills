@@ -23,6 +23,7 @@ Delegation workflow with a strict model split: **Fable 5 decides; GPT-5.5 gather
 - **Shared background goes in the batch `context` field once** — never duplicated per assignment.
 - **Follow-up work goes to the agent that already holds the context.** `irc` revives idle/parked agents; spawn fresh only when nobody has relevant context.
 - **Three strikes.** Any agent that fails the same gate three times stops patching — the failure goes to the architect for root-cause review. Repeated symptom-patching burns tokens and ships nothing.
+- **Don't break the cache.** Stable content first, volatile content last: never put timestamps, run ids, or changing status into `context` or early prompt positions; append to a conversation, never rewrite earlier turns. Exact-prefix cache hits price input at ~10% of fresh tokens — structure every spawn for prefix reuse.
 
 ## When to use
 - Non-trivial features, refactors, or multi-file changes where design quality matters.

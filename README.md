@@ -40,37 +40,37 @@ Existing real files and directories are backed up as `<path>.backup.<timestamp>`
 | `grill-me` | Interview the user relentlessly about a plan or design until shared understanding is reached |
 | `handoff` | `/handoff frontend\|backend\|qa\|all` — concise backend-change handoff docs per audience |
 | `skill-authoring` | Create, update, or review skills and shared agent instructions |
-| `plan-fable-execute-codex` | Multi-model split: Fable plans, Codex builds, Sonnet reviews, Opus red-teams high-stakes (guide below) |
+| `plan-opus-execute-codex` | Two-family split: Opus plans and reviews; GPT-5.5 scouts, builds, and red-teams high-stakes plans (guide below) |
 
 Per-harness specifics (what OMP, Claude Code, and OpenAI Codex each get): see [HARNESSES.md](HARNESSES.md).
 
 ## The multi-model workflow
 
-Seven files cooperate (OMP only). The split is strict: **Fable 5 decides; GPT-5.5 gathers and builds; a different Anthropic family reviews** — cross-family review kills self-agreement bias.
+Seven files cooperate (OMP only). The split is strict: **Opus 4.8 decides; GPT-5.5 gathers and builds; review always crosses families** — GPT-5.5's diff is reviewed by Opus, and high-stakes Opus plans are red-teamed by GPT-5.5. Two frontier models, two families; every artifact is reviewed across the family line.
 
 | File | Role | Model | Default path? |
 |---|---|---|---|
-| `skills/plan-fable-execute-codex/SKILL.md` | Orchestration: frame → plan → gate → execute → verify | session model (Fable 5) | yes |
-| `agents/fable-architect.md` | Decision maker: consumes scout dossiers, decides, emits a phased plan | `anthropic/claude-fable-5:high` | yes |
+| `skills/plan-opus-execute-codex/SKILL.md` | Orchestration: frame → plan → gate → execute → verify | session model (Opus 4.8) | yes |
+| `agents/opus-architect.md` | Decision maker: consumes scout dossiers, decides, emits a phased plan | `anthropic/claude-opus-4-8:high` | yes |
 | `agents/codex-scout.md` | Context gatherer: read-only investigation, returns citation-dense dossiers | `openai-codex/gpt-5.5:medium` | yes |
 | `agents/codex-executor.md` | Builder: implements the plan with full edit/build/test tooling | `openai-codex/gpt-5.5:high` | yes |
-| `agents/sonnet-reviewer.md` | Reviewer: diff vs plan — conformance, correctness, security, integrity | `anthropic/claude-sonnet-4-6:high` | yes |
-| `agents/opus-redteam.md` | Red team: adversarial attack on high-stakes plans before execution | `anthropic/claude-opus-4-8:high` | high-stakes only |
-| `agents/codex-reviewer.md` | Second reviewer: review-tuned model, independent pass on high-stakes diffs | `openai-codex/codex-auto-review:high` | high-stakes only |
+| `agents/opus-reviewer.md` | Reviewer: cross-family diff vs plan — conformance, correctness, security, integrity | `anthropic/claude-opus-4-8:high` | yes |
+| `agents/codex-redteam.md` | Red team: cross-family adversarial attack on high-stakes plans before execution | `openai-codex/gpt-5.5:high` | high-stakes only |
+| `agents/codex-reviewer.md` | Second reviewer: independent high-stakes pass, the second family on the panel | `openai-codex/gpt-5.5:high` | high-stakes only |
 
 ### Invoke
 
-Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*, *"big-brain plan then codex build"* — or frame the task as "plan it well, then implement it". The skill's description carries these triggers, so the orchestrator picks it up automatically. Trivial one-file edits don't need it; the skill tells the orchestrator to just do those directly.
+Say any of: *"plan with opus, execute with codex"*, *"use the split workflow"*, *"big-brain plan then codex build"* — or frame the task as "plan it well, then implement it". The skill's description carries these triggers, so the orchestrator picks it up automatically. Trivial one-file edits don't need it; the skill tells the orchestrator to just do those directly.
 
 ### What happens
 
-1. **Frame** — orchestrator states deliverable, constraints, non-goals. Missing facts are fetched by a `codex-scout`, never by Fable reading breadth.
-2. **Plan** — `fable-architect` (id `Architect`) fans out `codex-scout` agents for all investigation, consumes their dossiers, spot-checks only load-bearing claims, and returns Problem / Findings / Plan / Risks / Verification. Every phase carries `files:` and `depends:` markers.
+1. **Frame** — orchestrator states deliverable, constraints, non-goals. Missing facts are fetched by a `codex-scout`, never by the architect reading breadth.
+2. **Plan** — `opus-architect` (id `Architect`) fans out `codex-scout` agents for all investigation, consumes their dossiers, spot-checks only load-bearing claims, and returns Problem / Findings / Plan / Risks / Verification. Every phase carries `files:` and `depends:` markers.
 3. **Persist** — the plan is copied once to a file (`local://plan.md`, or the repo's plans dir for durable plans). It is never pasted into prompts again; everything downstream gets the reference.
 4. **Gate** — orchestrator checks structure (exact files/symbols named? verification runnable? deps marked?), not the design. Gaps go back to the idle architect over `irc`.
-5. **Red-team (high-stakes only)** — plans touching migrations, auth, money, irreversible data, or concurrency get attacked by `opus-redteam` first: kill shots go back to the architect before any execution. Ordinary changes skip this hop entirely.
+5. **Red-team (high-stakes only)** — plans touching migrations, auth, money, irreversible data, or concurrency get attacked by `codex-redteam` first (a GPT-5.5 brain, cross-family to the Opus author): kill shots go back to the architect before any execution. Ordinary changes skip this hop entirely.
 6. **Execute** — one batch of `codex-executor` spawns, one per independent phase group. Dependent phases are sent to the *same* executor via `irc` (it keeps its context). Executors escalate genuine design forks to the original architect over `irc` — reviving it, not respawning it.
-7. **Verify & review (parallel)** — orchestrator runs the union gates (tests/typecheck/lint over changed files) while `sonnet-reviewer` reviews the diff against the plan; high-stakes diffs additionally get an independent pass from `codex-reviewer` (review-tuned, no coordination between reviewers). Gate failures and review blockers route to the owning executor; three failed fixes of the same failure force escalation to the architect (no symptom-patching loops). Blockers clear before cleanup.
+7. **Verify & review (parallel)** — orchestrator runs the union gates (tests/typecheck/lint over changed files) while `opus-reviewer` reviews the diff against the plan, cross-family to the GPT-5.5 author; high-stakes diffs additionally get an independent `codex-reviewer` pass (GPT-5.5, no coordination between reviewers). Gate failures and review blockers route to the owning executor; three failed fixes of the same failure force escalation to the architect (no symptom-patching loops). Blockers clear before cleanup.
 8. **Cleanup** — changelog, tests, docs — only after gates pass and blockers are clear.
 
 ### Why it's token-efficient
@@ -78,7 +78,7 @@ Say any of: *"plan with fable, execute with codex"*, *"use the split workflow"*,
 - The plan exists **once**, as a file; agents receive paths, not pasted text.
 - Shared background goes in the batch `context` field once, not per assignment.
 - Idle/parked agents are **revived by messaging them** — escalations and follow-up phases reuse existing context instead of paying for fresh investigation.
-- **Fable never explores.** Raw investigation — file reads, searches, dead ends — runs on GPT-5.5 scouts; Fable pays only for compressed dossiers plus 1–3 spot-check range reads per load-bearing claim.
+- **The architect never explores.** Raw investigation — file reads, searches, dead ends — runs on GPT-5.5 scouts; Opus pays only for compressed dossiers plus 1–3 spot-check range reads per load-bearing claim.
 - The architect writes contracts (signatures, types, schemas), never implementation bodies — the executor retypes code anyway.
 - Review is evidence-bound: the reviewer gets the plan path and the diff scope, not a conversation transcript. The red team runs only when stakes justify a second frontier brain.
 - Three-strikes caps doomed fix loops — the third identical failure stops burning executor tokens and goes back to design.
@@ -96,25 +96,28 @@ Set once in `~/.omp/agent/config.yml` — these bill independently of the workfl
 
 ### Why these models (June 2026 data)
 
-- **Opus 4.8 as red team** — leads SWE-bench Pro (69.2% vs GPT-5.5's 58.6%) and honesty metrics (4× more likely to flag flaws in code, 35.9% vs 86% hallucination rate); prompt caching from 1,024 tokens makes its loops cheap. The strongest available second brain, reserved for when stakes justify it.
+The whole panel runs on two frontier models — Opus 4.8 (Anthropic) and GPT-5.5 (OpenAI) — chosen so every artifact is reviewed across the family line. The only sanctioned step down is the scout, which may drop to Sonnet 4.6 at high thinking; nothing weaker touches the workflow, and nothing but the frontier two does design, review, or implementation.
+
+- **Opus 4.8 as architect and reviewer** — leads SWE-bench Pro (69.2% vs GPT-5.5's 58.6%) and honesty metrics (4× more likely to flag flaws in code, 35.9% vs 86% hallucination rate); the strongest available reasoner, so it both authors the plan every build inherits and runs the cross-family review of the resulting diff. Prompt caching from 1,024 tokens keeps its loops cheap.
 - **GPT-5.5 as executor/scout** — wins Terminal-Bench 2.0 (78–82% vs Opus's 74.6%), the closest proxy for in-harness agentic build/test loops; also spreads load across both provider subscriptions instead of concentrating rate limits on Anthropic.
-- **Sonnet 4.6 as reviewer** — $3/$15 per MTok vs GPT-5.5's $5/$30, 79.6% SWE-bench Verified: frontier-adjacent review at mid-tier price, and cross-family vs the GPT-5.5 author. Practitioner consensus: reviewers from a different company than the author, because single-family review loops self-agree.
-- **codex-auto-review as second reviewer** — review-tuned; a second independent pass with different training catches different defects. High-stakes only: review panels are a pro pattern, but two reviewers on every change is orchestration tax.
-- **No haiku/mini/nano agent** — mechanical lookups already run on `codex-scout`; below that, dossier quality drops and the architect pays to re-verify, which costs more than the scout saved. Documented as a knob, not a default.
+- **GPT-5.5 as red team (high-stakes only)** — with Opus now authoring plans, the adversarial pass moves cross-family to the strongest available non-Anthropic reasoner. Same-family review shares blind spots; a GPT-5.5 red team attacks an Opus plan from outside its training, and — being the executor's own family — anticipates the exact ambiguities that would later trip execution. A net upgrade: the old Fable→Opus red team was same-family Anthropic.
+- **Why Opus reviews, not a cheaper mid-tier** — review depth is where regressions get caught, and this setup is frontier-only for load-bearing work; a mid-tier reviewer (e.g. Sonnet 4.6) trades catch-rate for token savings on exactly the diffs that matter. Opus stays cross-family to the GPT-5.5 author, so the self-agreement guard still holds.
+- **GPT-5.5 as second reviewer (high-stakes only)** — with only two families in play, the high-stakes panel pairs the cross-family Opus reviewer with a GPT-5.5 pass so both families are represented. GPT-5.5 shares the executor's family, so its value is a fresh independent read, not cross-family distance — that distance is Opus's job. Two reviewers on every change is orchestration tax, so it is reserved for migrations, auth, money, irreversible data, and concurrency.
+- **No haiku/mini/nano agent** — Sonnet 4.6 at high thinking is the floor (the sanctioned cheaper scout); below it, dossier quality drops and the architect pays to re-verify, which costs more than the small model saved. The floor is a knob, not a default.
 
 ### Prerequisites
 
-- OMP harness with `anthropic/claude-fable-5`, `openai-codex/gpt-5.5`, `anthropic/claude-sonnet-4-6`, `anthropic/claude-opus-4-8`, and `openai-codex/codex-auto-review` authed (`/model` to confirm).
+- OMP harness with `anthropic/claude-opus-4-8` and `openai-codex/gpt-5.5` authed (`/model` to confirm) — two models cover every role.
 - Agents installed via `scripts/init.sh` so all six agents are discoverable.
 
 ### Tuning
 
 - `codex-executor` is pinned `:high`. If plans are consistently tight and execution rarely escalates, drop to `openai-codex/gpt-5.5:medium` in `agents/codex-executor.md` for cheaper builds.
 - `codex-scout` is pinned `:medium` — right for navigation and extraction. Raise to `:high` only if dossiers keep missing couplings in gnarly code.
-- `sonnet-reviewer` is pinned `:high` — review depth is where regressions get caught; the input (plan + diff) is bounded, so the cost is too.
-- `opus-redteam` is opt-in by workflow design, not by model setting. Widen or narrow the "high-stakes" trigger list in the skill to tune how often it runs.
-- `codex-scout` can drop to `openai-codex/gpt-5.4-mini:medium` for very large mechanical sweeps where dossier depth matters less than volume — measure whether architect re-verification eats the savings before making it the default.
-- **Alternative executor profile:** `anthropic/claude-sonnet-4-6:high` is cheaper per token than GPT-5.5 and scores higher on SWE-bench — but it concentrates all heavy roles on one provider and puts author and reviewer in the same family; if you switch, move review to `codex-reviewer`.
+- `opus-reviewer` is pinned `:high` — review depth is where regressions get caught; the input (plan + diff) is bounded, so the cost is too.
+- `codex-redteam` is opt-in by workflow design, not by model setting. Widen or narrow the "high-stakes" trigger list in the skill to tune how often it runs.
+- `codex-scout` can drop to `anthropic/claude-sonnet-4-6:high` for cheaper exploration — the one model-policy-sanctioned step below the frontier pair. Sonnet at high thinking keeps dossiers sharp (unlike a small model), so the architect rarely re-verifies; the trade is that the scout moves to the architect's family and off the OpenAI provider (no cross-provider load-spread for reads). Making it the default would also mean renaming `codex-scout` → `sonnet-scout`.
+- **Single-family fallback:** if the OpenAI provider is rate-limited or unauthed, the workflow can run entirely on Opus (architect, executor, reviewer). This is a degraded mode — you lose cross-family review (the main safeguard) and Opus is less agentic than GPT-5.5 in build/test loops — so treat it as a fallback, not a default.
 
 ## Validate
 

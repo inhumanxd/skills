@@ -23,7 +23,7 @@ Strict model split: **Opus 4.8 decides; GPT-5.5 gathers and builds; review cross
 - **The architect never explores — nor do you.** All context gathering (locating code, mapping flows, enumerating callsites, extracting contracts) goes to `codex-scout`; the architect only consumes dossiers and spot-checks load-bearing lines. Context the live session already holds → persist it once as a dossier and hand it by reference, don't force a re-scout.
 - **The plan exists once, as a file.** Hand references (`local://plan.md`); never paste or retype plan text.
 - **Shared background goes in the batch `context` field once**, never per assignment.
-- **Follow-up goes to the agent that already holds the context** — `irc` revives idle/parked agents; spawn fresh only when nobody has it.
+- **Follow-up goes to the agent that already holds the context** — `irc` revives idle/parked agents; spawn fresh only when nobody has it. A malformed or unparseable yield is the same move: `irc` that agent to re-emit cleanly, read the well-formed siblings meanwhile — never discard the work or re-spawn.
 - **Three strikes.** Any agent failing the same gate three times stops patching; the failure goes to the architect for root-cause.
 - **Don't break the cache.** Stable content first, volatile last (no timestamps/run-ids/status in `context` or early positions); append, never rewrite earlier turns. Exact-prefix hits price input at ~10%.
 

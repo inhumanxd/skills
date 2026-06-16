@@ -35,6 +35,7 @@ Everything links through `~/.agents/` into each harness's config dir: `skills/*`
 | `handoff` | `/handoff frontend\|backend\|qa\|all` — concise backend-change handoff docs per audience |
 | `skill-authoring` | Create, update, or review skills and shared agent instructions |
 | `plan-opus-execute-codex` | Two-family split: Opus plans and reviews; GPT-5.5 scouts, builds, and red-teams high-stakes plans (guide below) |
+| `fleet` | Launch multiple agents at once: fan out independent work for speed, or attack one hard design from many angles (best-of-N); reuses the six agents (guide below) |
 
 Per-harness specifics: see [HARNESSES.md](HARNESSES.md).
 
@@ -105,6 +106,21 @@ Two frontier models do all load-bearing work — Opus 4.8 (Anthropic) and GPT-5.
 - `opus-reviewer` stays `:high` — bounded input (plan + diff), high catch value.
 - `codex-redteam` is opt-in by the "high-stakes" trigger list in the skill, not by a model setting.
 - **Single-family fallback:** if OpenAI is unavailable, run all-Opus (architect / executor / reviewer) — a degraded mode (no cross-family review, and Opus is less agentic in build loops).
+
+## The fleet workflow
+
+Where the multi-model workflow takes ONE task deep, `fleet` takes a PORTFOLIO wide. It's a layer above: the session (Opus 4.8) acts as commander, decomposing work into independent tracks and dispatching each through its own cross-family pipeline — reusing the same six agents, adding no new seat.
+
+Two modes:
+
+- **Speed (fan-out)** — many *different* independent tasks run at once (test-coverage sprints, independent bug-bashes, per-package migrations, a change rippling across repositories). Win = wall-clock.
+- **Quality (best-of-N)** — *one* hard problem explored by N `opus-architect` instances with deliberately different framings, then attacked cross-family (`codex-redteam` per candidate) so selection rests on what survives, not on Opus grading Opus; the commander judges and picks/synthesizes. Win = a better design at ≈ one architect's wall-clock.
+
+Three invariants keep it genius rather than chaos: **contract-first** (any shared interface is frozen to `local://contract.md` before fan-out), **disjoint ownership** (no two live tracks write the same file), and **integration is serial** (union gates + exercise every cross-track/cross-repo seam, never just per-track green). The commander refuses fake parallelism — an indivisible task runs as a single `plan-opus-execute-codex` track instead.
+
+### Invoke
+
+Say *"launch multiple agents"*, *"parallelize / fan out these"*, *"do these at once"*, *"this spans multiple repos"*, or *"explore a few designs and pick the best"*. A single indivisible task or a trivial edit skips it.
 
 ## Validate
 

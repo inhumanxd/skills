@@ -16,7 +16,7 @@ Pre-existing real files were backed up as `<path>.backup.<timestamp>` — deleta
 
 The only harness that runs the complete workflow.
 
-- **Skills**: `~/.omp/skills/<name>` — all seven, including `plan-opus-execute-codex`.
+- **Skills**: `~/.omp/skills/<name>` — all eight, including `plan-opus-execute-codex` and `fleet`.
 - **Agents**: `~/.omp/agent/agents/*.md` — all six (`opus-architect`, `codex-scout`, `codex-executor`, `opus-reviewer`, `codex-redteam`, `codex-reviewer`) with pinned models, tool allowlists, and `spawns` permissions. OMP-specific (`irc`, `agent://`, model pins); not portable.
 - **Global defaults**: `~/.omp/AGENTS.md`.
 - **Config levers** (`~/.omp/agent/config.yml`, not this repo):
@@ -27,7 +27,7 @@ The only harness that runs the complete workflow.
 
 ## Claude Code
 
-- **Skills**: `~/.claude/skills/<name>` — all seven discoverable. Caveat: `plan-opus-execute-codex` references OMP-only agents; its triggers are explicit phrases so it stays dormant — if invoked, fall back to plan-then-implement in one session.
+- **Skills**: `~/.claude/skills/<name>` — all eight discoverable. Caveat: `plan-opus-execute-codex` and `fleet` reference OMP-only agents; their triggers are explicit phrases so they stay dormant — if invoked, fall back to plan-then-implement (or sequential execution) in one session.
 - **Global defaults**: `~/.claude/CLAUDE.md` → shared `AGENTS.md`.
 - **rtk**: `PreToolUse` hook in `~/.claude/settings.json` rewrites Bash commands (`git status` → `rtk git status`); `~/.claude/RTK.md` documents the meta commands. Verify with `rtk gain`.
 - **Verify**: `readlink ~/.claude/CLAUDE.md` and `~/.claude/skills/production-grade-code` resolve into `~/.agents/`.

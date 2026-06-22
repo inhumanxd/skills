@@ -1,6 +1,6 @@
 ---
 name: scope-and-slice
-description: "Analyzes large or ambiguous requests before implementation, decomposes them into small verifiable slices, and prevents context drift. Use when a task is broad, multi-step, multi-file, vague, touches multiple layers, asks to create/update a module, mentions all/entire/full/refactor/flow/system, or feels too large to complete well in one focused pass."
+description: "Analyzes large or ambiguous requests before implementation, decomposes them into small verifiable slices, and prevents context drift. Use when a task is broad, multi-step, multi-file, vague, touches multiple layers, asks to create/update a module, mentions all/entire/full/refactor/flow/system, or feels too large to complete well in one focused pass. Do NOT use for a small, already-scoped change (just implement with production-grade-code), or once a concrete plan already exists."
 ---
 
 # Scope And Slice

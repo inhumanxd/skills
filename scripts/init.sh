@@ -29,8 +29,8 @@ Installs this repo's skills and agents globally for common coding agents.
 
 Options:
   --dry-run          Print actions without changing files.
-  --copy             Copy skill directories instead of symlinking to this repo.
-  --no-instructions  Install skills only; skip global instruction files.
+  --copy             Copy skills/agents/defaults instead of symlinking to this repo.
+  --no-instructions  Install skills and agents only; skip global instruction files.
   -h, --help         Show this help.
 
 Default behavior:

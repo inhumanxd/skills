@@ -1,6 +1,6 @@
 ---
 name: production-grade-code
-description: "Writes, refactors, debugs, and reviews production-grade code. Use when the user asks to implement, fix, refactor, harden, simplify, improve architecture, create/update modules, make reusable, make maintainable, or write code like a senior/staff engineer. Enforces outside-in design, honest interfaces, module lifecycle completeness, deep-enough modules, behavior verification, safe refactoring, and explicit failure handling."
+description: "Writes, refactors, debugs, and reviews production-grade code. Use when the user asks to implement, fix, refactor, harden, simplify, improve architecture, create/update modules, make reusable, make maintainable, or write code like a senior/staff engineer. Enforces outside-in design, honest interfaces, module lifecycle completeness, deep-enough modules, behavior verification, safe refactoring, and explicit failure handling. Do NOT use for decomposing a broad or ambiguous request first (use scope-and-slice), or for orchestrating a multi-agent plan-then-build workflow (use a plan-* skill)."
 ---
 
 # Production Grade Code

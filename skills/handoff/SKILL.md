@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: "Generates concise backend-change handoff docs for frontend, QA, backend, or all audiences. Use when: /handoff, /handoff frontend, /handoff backend, /handoff qa, /handoff all, frontend handoff, QA test handoff, backend handoff, implementation handoff after backend changes."
+description: "Generates concise backend-change handoff docs for frontend, QA, backend, or all audiences. Use when: /handoff, /handoff frontend, /handoff backend, /handoff qa, /handoff all, frontend handoff, QA test handoff, backend handoff, implementation handoff after backend changes. Do NOT use for writing the code itself, or for docs unrelated to a backend-change handoff."
 argument-hint: "frontend | backend | qa | all [optional change scope]"
 ---
 

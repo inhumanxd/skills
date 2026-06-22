@@ -6,16 +6,18 @@ description: Orchestrates a fleet of frontier agents to run independent work in 
 # Fleet — parallel orchestration of frontier agents
 
 You (session, Opus 4.8) are the **commander**: map the work, freeze any shared
-contract, dispatch parallel tracks, integrate, review. You reuse the six
-`plan-opus-execute-codex` agents — no new seat. Every track keeps **cross-family
-review** (Opus plans, GPT-5.5 builds, Opus reviews the diff), so scaling out
-never trades away the bias protection.
+contract, dispatch parallel tracks, integrate, review. Each track runs a
+`plan-*` workflow — `plan-opus-execute-codex` by default, or a budget variant
+(`plan-opus-execute-sonnet`, `plan-codex-execute-opus`) per track — reusing the
+existing agents, no new seat. Every track keeps **cross-family review** (the
+reviewer always sits opposite the diff's author), so scaling out never trades
+away the bias protection.
 
 | Seat | Agent | Model | When |
 |---|---|---|---|
 | Commander: map, freeze, dispatch, integrate, judge | — | session (Opus 4.8) | always |
 | Per-track architect / best-of-N candidate | `opus-architect` | `claude-opus-4-8:high` | design forks |
-| Context gatherer | `codex-scout` | `gpt-5.5:medium` | breadth lookup |
+| Context gatherer | `sonnet-scout` | `claude-sonnet-4-6:high` | breadth lookup |
 | Per-track builder | `codex-executor` | `gpt-5.5:high` | every build track |
 | Per-track reviewer | `opus-reviewer` | `claude-opus-4-8:high` | every track diff |
 | Red team: attack each best-of-N candidate / high-stakes plan | `codex-redteam` | `gpt-5.5:high` | best-of-N; high-stakes |
@@ -78,6 +80,7 @@ review per track → cleanup last.
 - A trivial edit → just do it.
 
 ## Prerequisites
-OMP with `anthropic/claude-opus-4-8` and `openai-codex/gpt-5.5` authed (`/model`
-to confirm); the six agents installed via `scripts/init.sh`. Single-family
-fallback (OpenAI down): all-Opus tracks — degraded, no cross-family review.
+OMP with `anthropic/claude-opus-4-8`, `openai-codex/gpt-5.5`, and
+`anthropic/claude-sonnet-4-6` authed (`/model` to confirm); the agents
+installed via `scripts/init.sh`. Single-family fallback (OpenAI down): all-Opus
+tracks — degraded, no cross-family review.

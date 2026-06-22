@@ -1,6 +1,6 @@
 ---
 name: grill-with-docs
-description: "Challenges plans against domain language, existing code, CONTEXT.md, and ADRs, then records resolved terms and decisions. Use when the user asks to stress-test a plan, clarify product/domain terms, resolve architecture trade-offs, or create/update CONTEXT.md or ADRs."
+description: "Challenges plans against domain language, existing code, CONTEXT.md, and ADRs, then records resolved terms and decisions. Use when the user asks to stress-test a plan, clarify product/domain terms, resolve architecture trade-offs, or create/update CONTEXT.md or ADRs. Do NOT use for a plain plan interview without domain-doc or ADR grounding (use grill-me), or for writing implementation code."
 ---
 
 ## Protocol

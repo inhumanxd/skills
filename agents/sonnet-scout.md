@@ -1,7 +1,7 @@
 ---
-name: codex-scout
-description: Read-only context-gathering specialist on OpenAI Codex GPT-5.5. Returns a compressed, citation-dense dossier so the Opus architect/orchestrator never spends tokens on raw exploration. Use for all breadth investigation — locating code, mapping flows, enumerating callsites, extracting contracts and conventions. Does NOT edit code or make design decisions.
-model: openai-codex/gpt-5.5:medium
+name: sonnet-scout
+description: Read-only context-gathering specialist on Claude Sonnet 4.6. Returns a compressed, citation-dense dossier so the Opus architect/orchestrator never spends tokens on raw exploration. Use for all breadth investigation — locating code, mapping flows, enumerating callsites, extracting contracts and conventions. Does NOT edit code or make design decisions.
+model: anthropic/claude-sonnet-4-6:high
 tools: read, search, find, lsp, ast_grep
 spawns: ""
 ---

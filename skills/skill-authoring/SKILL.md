@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: "Improves, creates, and reviews agent skills and shared coding-agent instructions. Use when the user asks to create a skill, update a skill, improve agent behavior, refine prompts/instructions, add evaluations, validate skill structure, or apply Anthropic/Matt Pocock skill-writing guidance."
+description: "Improves, creates, and reviews agent skills and shared coding-agent instructions. Use when the user asks to create a skill, update a skill, improve agent behavior, refine prompts/instructions, add evaluations, validate skill structure, or apply Anthropic/Matt Pocock skill-writing guidance. Do NOT use for ordinary product or app code (use production-grade-code); only for skills and agent instructions."
 ---
 
 # Skill Authoring

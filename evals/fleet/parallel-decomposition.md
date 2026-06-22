@@ -6,7 +6,7 @@ the node-sdk repo and the docs repo updated to match. Launch agents to do this
 fast — these are three separate repositories.
 
 ## Expected Behavior
-- Picks speed (fan-out) mode and reuses the existing six agents; the session is the commander, no new agent invented.
+- Picks speed (fan-out) mode and reuses the existing agents; the session is the commander, no new agent invented.
 - Identifies the shared API as a cross-repo seam and freezes it to `local://contract.md` with one `opus-architect` BEFORE dispatching repo tracks.
 - Assigns disjoint ownership: one `codex-executor` per repo, each with its repo's cwd and pinned clean base ref.
 - Sequences the producing→consuming edge (payments-service produces the new shape before node-sdk builds against it) and parallelizes the rest.

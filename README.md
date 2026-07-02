@@ -37,6 +37,7 @@ Everything links through `~/.agents/` into each harness's config dir: `skills/*`
 | `plan-opus-execute-codex` | Two-family split: Opus plans and reviews, GPT-5.5 builds and red-teams; Sonnet 4.6 scouts (guide below) |
 | `plan-opus-execute-sonnet` | Budget twin of the above: Opus plans, Sonnet builds, GPT-5.5 reviews cross-family — conserves a scarce Codex budget (guide below) |
 | `plan-codex-execute-opus` | Budget mirror: GPT-5.5/Codex plans, Opus builds the heavy loop, GPT-5.5 reviews cross-family — spends a scarce Codex budget on design, not the build (guide below) |
+| `plan-fable-execute-codex` | Decision-layer variant: Fable 5 makes only the business-critical calls (forks, arbitration, go/no-go), Opus expands them into the plan and reviews, GPT-5.5 builds and red-teams (guide below) |
 | `fleet` | Launch multiple agents at once: fan out independent work for speed, or attack one hard design from many angles (best-of-N); reuses the six agents (guide below) |
 
 Per-harness specifics: see [HARNESSES.md](HARNESSES.md).
@@ -141,6 +142,22 @@ Only one new agent (`sonnet-executor`) plus the new skill; every other seat reus
 Three new agents (`codex-architect`, `opus-executor`, `opus-redteam`) plus the new skill; the scout and both GPT-5.5 reviewers reuse existing agents. Cross-family review holds in both directions: Opus builds → GPT-5.5 reviews the diff; GPT-5.5 plans → Opus red-teams the plan. Pick this over the Sonnet variant when you want GPT-5.5's reasoning on the *design* (not Opus's), with Opus as the builder.
 
 **Choosing a variant.** All three are invocable by trigger; when unsure or asked to auto-pick, the orchestrator runs `omp usage` once and reads the **Openai Codex** account — near its cap (`5 hours`/`7 days` bars ≈ 100%, `× quota left` ≈ 0) → a Codex-light variant (`plan-opus-execute-sonnet` or `plan-codex-execute-opus`, so Codex does only bounded work); comfortable headroom → `plan-opus-execute-codex` lets GPT-5.5's agentic-build strength do the heavy lifting. Between the two Codex-light variants, pick by who should design (Opus in the Sonnet variant, GPT-5.5 in `plan-codex-execute-opus`) **and by Anthropic headroom**: `plan-codex-execute-opus` builds on Opus — the most Opus-hungry choice — so on a Sonnet-rich, Opus-scarce plan (e.g. Max 5x) default to `plan-opus-execute-sonnet` instead. See the [Sonnet budget playbook](#sonnet-budget-playbook). The `Claude 7 Day (Sonnet)` sub-cap the scout and Sonnet executor draw from rarely binds first; Opus draws the shared pool ~8–10× faster.
+
+### Variant: Fable as the decision brain (business-critical work)
+
+`plan-fable-execute-codex` layers one seat on top of the default workflow: **Claude Fable 5 as decision authority**. Fable is priced far above every other seat, so it touches only bounded decision memos — business-critical design forks (schema/data model, public API contracts, auth/security, money, irreversible data, vendor/build-vs-buy), arbitration of conflicting frontier verdicts, and go/no-go on high-stakes plans. It never explores, never authors the phased plan, never builds, never reviews diffs: escalations arrive as a ≤ 1-page decision packet (question, stakes, 2–3 cited options, recommendation) and leave as a Decision / Rationale / Non-negotiables / Rejected-alternatives memo that `opus-architect` expands into the plan.
+
+| Role | Agent | Model |
+|---|---|---|
+| Decision authority (business-critical only) | `fable-principal` | `claude-fable-5:high` |
+| Architect (plan, honoring the memo) | `opus-architect` | `claude-opus-4-8:high` |
+| Scout (explore) | `sonnet-scout` | `claude-sonnet-4-6:high` |
+| Executor (build) | `codex-executor` | `gpt-5.5:high` |
+| Reviewer (cross-family) | `opus-reviewer` | `claude-opus-4-8:high` |
+| Red team (high-stakes) | `codex-redteam` | `gpt-5.5:high` |
+| Second reviewer (high-stakes) | `codex-reviewer` | `gpt-5.5:high` |
+
+One new agent (`fable-principal`); every other seat reuses an existing agent. Cross-family review holds in both directions: Anthropic decides and plans (Fable memo → Opus plan) → GPT-5.5 red-teams; GPT-5.5 builds → Opus reviews the diff. No business-critical fork in the task → the decision seat is skipped and the run is plain `plan-opus-execute-codex`; Codex-scarce budgets flex the executor/reviewer seats exactly like the sibling variants while the Fable seat never moves.
 
 ## The fleet workflow
 
